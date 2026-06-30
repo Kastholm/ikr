@@ -1,5 +1,5 @@
 <template>
-  
+
   <NuxtLayout :name="layout">
     <figure
       class="h-[300px] min-h-[300px] respons w-[250px] bg-[#919995] clip4 absolute left-0 top-20 sm:translate-y-20 z-0"
@@ -15,7 +15,7 @@
           <div
             class="flex flex-col flex-wrap text-white h-full items-center justify-evenly gap-10 -translate-y-4"
           >
-            <h1 class="">{{ data.title }}</h1>
+            <h1 class="">{{ data?.title }}</h1>
             <div class="flex flex-col items-center gap-5">
               <div class="flex items-center justify-center gap-7 hover:underline">
                 <img
@@ -24,7 +24,7 @@
                   class="h-[55px]"
                 />
                 <a href="tel:+45 88 27 63 33" class="min-w-fit">
-                  <p class="min-w-full">{{ data.title2 }} <br  />{{ data.title3 }}</p></a
+                  <p class="min-w-full">{{ data?.title2 }} <br  />{{ data?.title3 }}</p></a
                 >
               </div>
               <div class="w-full flex items-center gap-7 hover:underline">
@@ -34,12 +34,12 @@
                   class="h-[49px]"
                 />
                 <a href="mailto:mail@ikr.dk" class="min-w-fit">
-                  <p class="min-w-full">{{ data.title4 }} <br />{{ data.title5 }}</p></a
+                  <p class="min-w-full">{{ data?.title4 }} <br />{{ data?.title5 }}</p></a
                 >
               </div>
             </div>
             <p class="w-[80%] text-center">
-              <PortableText :value="data.text1[0]" :components="components" />
+              <PortableText v-if="data?.text1?.[0]" :value="data.text1[0]" :components="components" />
             </p>
           </div>
         </div>
@@ -51,77 +51,66 @@
           class="bg-[#256c2b] kontakt-faner-tablet w-full p-8 rounded-b-3xl sm:rounded-t-none rounded-t-3xl shadow-2xl shadow-[#00000050]"
         >
           <label for="navn" class="block mb-4 text-white"
-            >{{ data.title6 }}
+            >{{ data?.title6 }}
             <Field
               name="name"
-              type="name"
+              type="text"
               class="w-full px-3 py-2 border rounded text-black"
             />
-            <ErrorMessage name="name" />
+            <ErrorMessage name="name" class="text-red-300 text-sm" />
           </label>
-  
+
           <label for="telefon" class="block mb-4 text-white"
-            >{{ data.title7 }}
-            <input
-              v-model="telefon"
-              type="phone"
-              id="telefon"
+            >{{ data?.title7 }}
+            <Field
               name="phone"
+              type="tel"
               class="w-full px-3 py-2 border rounded text-black"
-              required
             />
+            <ErrorMessage name="phone" class="text-red-300 text-sm" />
           </label>
-  
+
           <label for="email" class="block mb-4 text-white"
-            >{{ data.title8 }}
+            >{{ data?.title8 }}
             <Field
               type="email"
               name="email"
               class="w-full px-3 py-2 border rounded text-black"
             />
+            <ErrorMessage name="email" class="text-red-300 text-sm" />
           </label>
-  
+
           <label for="virksomhed" class="block mb-4 text-white"
-            >{{ data.title9 }} 
+            >{{ data?.title9 }}
             <Field
-              type="virksomhed "
+              type="text"
               name="virksomhed"
               class="w-full px-3 py-2 border rounded text-black"
             />
+            <ErrorMessage name="virksomhed" class="text-red-300 text-sm" />
           </label>
-  
+
           <label for="besked" class="block mb-4 text-white"
-            >{{ data.title10 }}
+            >{{ data?.title10 }}
             <Field
               as="textarea"
               name="text"
-              v-model="text"
               rows="4"
               class="w-full px-3 py-2 border rounded text-black"
             ></Field>
           </label>
-  
+
           <button
-    :class="messageSent ? 'bg-green-500' : 'bg-[#0a3700]'"
-    class="text-white px-4 py-2 rounded hover:scale-110 transition-all font-semibold"
-    @click="sendMessage"
-  >
-    {{ messageSent ? 'Sent!' : 'Send' }}
-  </button>
-          <span v-if="messageSent" class="text-white ml-4"
-            >Message sent! - we will contact you.</span
+            type="submit"
+            :disabled="sending"
+            :class="messageSent ? 'bg-green-500' : 'bg-[#0a3700]'"
+            class="text-white px-4 py-2 rounded hover:scale-110 transition-all font-semibold disabled:opacity-60 disabled:scale-100"
           >
-        </Form>
-  
-        <div v-if="isNotificationVisible" class="notification-modal grid">
-          <p>{{ notificationMessage }}</p>
-          <button
-            class="bg-SubColor2 p-2 text-lg rounded-lg mt-4 m-auto text-gray-100"
-            @click="closeForm"
-          >
-            X
+            {{ messageSent ? 'Skickat!' : sending ? 'Skickar...' : 'Skicka' }}
           </button>
-        </div>
+          <span v-if="messageSent" class="text-white ml-4">Meddelande skickat! - vi kontaktar dig.</span>
+          <span v-if="sendError" class="text-red-300 ml-4">{{ sendError }}</span>
+        </Form>
       </section>
     </main>
   </NuxtLayout>
@@ -131,57 +120,37 @@
 import { ref } from "vue";
 import { Field, Form, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
-const messageSent = ref(false); 
+import { PortableText } from "@portabletext/vue";
 
-async function onSubmit(value) {
-  const schema = yup.object({
-    name: yup.string().required(),
-    phone: yup.string().required(),
-    email: yup.string().email(),
-    virksomhed: yup.string().required(),
-  });
-  // Data der skal sendes til backend
-  const formData = {
-    name: value.name,
-    phone: value.phone,
-    email: value.email,
-    virksomhed: value.virksomhed,
-    text: value.text,
-  };
+const messageSent = ref(false);
+const sending = ref(false);
+const sendError = ref("");
+
+const schema = yup.object({
+  name: yup.string().required(),
+  phone: yup.string().required(),
+  email: yup.string().email().required(),
+  virksomhed: yup.string().required(),
+});
+
+async function onSubmit(values) {
+  sending.value = true;
+  sendError.value = "";
   try {
-    const response = await fetch("https://ikrmail.webtify.dk/send-email", {
+    await $fetch("/api/send-email", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
+      body: values,
     });
-    const data = await response.json();
-    console.log(data);
-    if (response.ok) {
-      notificationMessage.value = "E-mail sendt!";
-      isNotificationVisible.value = true;
-    } else {
-      notificationMessage.value = "Fejl ved afsendelse af e-mail.";
-      isNotificationVisible.value = true;
-    }
-  } catch (error) {
-    console.error("There was an error sending the e-mail:", error);
+    messageSent.value = true;
+  } catch {
+    sendError.value = "Det gick inte att skicka e-post. Försök igen.";
+  } finally {
+    sending.value = false;
   }
 }
 
-const isNotificationVisible = ref(false);
-const notificationMessage = ref("");
-function sendMessage() {
-  messageSent.value = true; // This will change the button's state immediately when clicked
-  onSubmit(); // Call your existing submit function
-}
 const query = groq`*[(_type == "Kontakt") && lang == "Svensk" ][0]`;
-
-const sanity = useSanity();
 const { data } = useSanityQuery(query);
-import { PortableText } from "@portabletext/vue";
-console.log(data);
 
 definePageMeta({
   layout: 'svensk-layout'

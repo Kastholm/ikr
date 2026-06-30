@@ -1,4 +1,4 @@
-export default {
+export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
@@ -25,6 +25,9 @@ export default {
     useCdn: true,
   },
   i18n: {
-    vueI18n: './i18n.config.ts' // if you are using custom path, default
-  }
-}
+    vueI18n: './i18n.config.ts'
+  },
+  runtimeConfig: {
+    resendApiKey: process.env.RESEND_API_KEY,
+  },
+})
