@@ -121,7 +121,9 @@ import { ref } from "vue";
 import { Field, Form, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
 import { PortableText } from "@portabletext/vue";
+import emailjs from "@emailjs/browser";
 
+const config = useRuntimeConfig();
 const messageSent = ref(false);
 const sending = ref(false);
 const sendError = ref("");
@@ -137,10 +139,18 @@ async function onSubmit(values) {
   sending.value = true;
   sendError.value = "";
   try {
-    await $fetch("/api/send-email", {
-      method: "POST",
-      body: values,
-    });
+    await emailjs.send(
+      config.public.emailjsServiceId,
+      config.public.emailjsTemplateId,
+      {
+        from_name: values.name,
+        from_phone: values.phone,
+        from_email: values.email,
+        virksomhed: values.virksomhed,
+        message: values.text ?? "",
+      },
+      config.public.emailjsPublicKey
+    );
     messageSent.value = true;
   } catch {
     sendError.value = "Det gick inte att skicka e-post. Försök igen.";

@@ -28,6 +28,10 @@ export default defineNuxtConfig({
     vueI18n: './i18n.config.ts'
   },
   runtimeConfig: {
-    resendApiKey: process.env.RESEND_API_KEY,
+    public: {
+      emailjsServiceId: process.env.EMAILJS_SERVICE_ID,
+      emailjsTemplateId: process.env.EMAILJS_TEMPLATE_ID,
+      emailjsPublicKey: process.env.EMAILJS_PUBLIC_KEY,
+    },
   },
 })
